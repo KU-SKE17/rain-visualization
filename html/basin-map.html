@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Station Locations</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+   integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+   crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+   integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+   crossorigin=""></script>
+  <script src="https://cdn.rawgit.com/mapbox/wellknown/master/wellknown.js"></script>
+</head>
+<body>
+  <h2>Ping River Basin and Stations</h2>
+  <div id="map" style="width:100vw;height:600px;"></div>
+  <script>
+    async function createMap() {
+      // fetch basin's geometry data from GraphQL endpoint
+      var resp = await fetch('http://localhost:3000/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            {
+              basin(basinId:3) {
+                geom
+                stations { stationId name lat lon }
+              }
+            }`
+        })
+      });
+      var result = await resp.json();
+
+      // create a map using the LeafLet library
+      var map = L.map('map');
+
+      // create a tile layer with map data from OpenStreetMap
+      var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      });
+      tileLayer.addTo(map);
+
+      // convert geometry data in WKT format to GeoJson using the wellknown
+      // library; then add to the map
+      var geoBasin = L.geoJson(wellknown.parse(result.data.basin.geom));
+      geoBasin.setStyle({color: "blue"});
+      geoBasin.addTo(map);
+
+      // create markers to display station locations
+      for (var station of result.data.basin.stations) {
+        var marker = L.marker([station.lat, station.lon]);
+        marker.addTo(map);
+        marker.bindTooltip("<b>ID:</b> " + station.stationId + "<br><b>Name: </b>" + station.name);
+      }
+
+      // set the map's zoom level and view to fit the basin's perimeter
+      map.fitBounds(geoBasin.getBounds());
+    }
+
+    createMap();
+  </script>
+</body>
+</html>
