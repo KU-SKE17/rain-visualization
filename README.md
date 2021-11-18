@@ -47,3 +47,15 @@ $ openapi-to-graphql --cors -u http://localhost:8080/rain-api/v3 openapi/rain-ap
 ```
 
 open [index](html/index.html) on browser
+
+## Chart
+
+- [monthly-avg](html/monthly-avg.html)
+- use `plotly` library
+- use js to map data from graphql to Plotly
+
+## Map
+
+- [basin-map](html/basin-map.html)
+- use `leaflet` library
+- note. data was in well-known binary (WKB) format
